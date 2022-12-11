@@ -1,0 +1,86 @@
+---
+title: "Logistic Regression feature ranking"
+author: "GMJ"
+date: "2022-12-09"
+output: html_document
+---
+
+```{r}
+library(caret)
+library(rpart)
+library(e1071)
+library(randomForest)
+library(PRROC)
+library(MLmetrics)
+library(survival)
+library(survminer)
+```
+
+```{r}
+df = read.csv(url("https://archive.ics.uci.edu/ml/machine-learning-databases/00519/heart_failure_clinical_records_dataset.csv"))
+```
+
+```{r}
+df = subset(df, select = -c(time))
+```
+
+
+
+
+```{r}
+
+results_df <- data.frame(age=numeric(0), anaemia=numeric(0), creatinine_phosphokinase=numeric(0), diabetes=numeric(0), ejection_fraction=numeric(0), high_blood_pressure=numeric(0), platelets=numeric(0), serum_creatinine=numeric(0), serum_sodium=numeric(0), sex=numeric(0), smoking=numeric(0) )
+colnames(results_df) = c("age", "anaemia", "creatinine_phosphokinase", "diabetes", "ejection_fraction", "high_blood_pressure", "platelets", "serum_creatinine", "serum_sodium", "sex", "smoking")
+#results_df = t(results_df)
+print(results_df)
+
+  #c("MCC", "F1 score", "accuracy", "TP rate", "TN rate", "PR AUC", "ROC AUC")
+
+n = 100
+
+for(i in 1:n) {
+  
+  df = df[sample(nrow(df)),]
+  
+  model = glm(DEATH_EVENT ~., data = df, family = "binomial")
+
+  imp = varImp(model)
+  #imp = t(imp)
+  
+  imp$clinical_feature = row.names(imp)
+  #imp$clinical_feature
+
+  rank = imp[order(imp$"clinical_feature"),]
+  #print(rank)
+  
+  if (i == 1){
+    results_df = rank
+  } else {
+    results_df$"Overall" = results_df$"Overall" + rank$"Overall"
+  }
+  
+  #results_df$"Overall" = results_df$"Overall" + rank$"Overall"
+  #my_df = data.frame(imp)
+  #row.names(my_df) = row.names(result)
+  #colnames(my_df) = colnames(results_df)
+  #colnames(results_df) = colnames(my_df)
+  
+  #results_df = rbind(results_df, my_df)
+
+}
+print(results_df)
+
+results_df$"finalOverall" = results_df$"Overall" / n
+results_df = results_df[order(-results_df$"finalOverall"),]
+results_df$"finalPos" = c(1:dim(results_df)[1])
+print(results_df)
+
+```
+
+```{r}
+write.csv(final_result, "log_reg_feature_ranking_results.csv")
+```
+
+```{r}
+write.csv(results_df, "log_reg_feature_ranking_results_log.csv")
+```

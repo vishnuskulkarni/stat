@@ -1,0 +1,103 @@
+---
+title: "Random Forest Feature Ranking"
+output: html_document
+---
+
+```{r}
+library(caret)
+library(rpart)
+library(e1071)
+library(randomForest)
+library(PRROC)
+library(MLmetrics)
+```
+
+
+```{r}
+df = read.csv(url("https://archive.ics.uci.edu/ml/machine-learning-databases/00519/heart_failure_clinical_records_dataset.csv"))
+```
+
+```{r}
+df = subset(df, select = -c(time))
+df$DEATH_EVENT = as.factor(df$DEATH_EVENT)
+df
+```
+
+```{r}
+results_df <- data.frame(age=numeric(0), anaemia=numeric(0), creatinine_phosphokinase=numeric(0), diabetes=numeric(0), ejection_fraction=numeric(0), high_blood_pressure=numeric(0), platelets=numeric(0), serum_creatinine=numeric(0), serum_sodium=numeric(0), sex=numeric(0), smoking=numeric(0) )
+colnames(results_df) = c("age", "anaemia", "creatinine_phosphokinase", "diabetes", "ejection_fraction", "high_blood_pressure", "platelets", "serum_creatinine", "serum_sodium", "sex", "smoking")
+#results_df = t(results_df)
+print(results_df)
+
+n = 3
+
+for(i in 1:n) {
+  
+  df = df[sample(nrow(df)),]
+  
+  model = randomForest(DEATH_EVENT ~ ., data = df, importance=TRUE, proximity = TRUE)
+  
+  #im = model$importance
+  imp = as.data.frame(model$importance)
+  #im = t(im)
+  #print(imp)
+  #imp = varImp(model)
+  
+  #print(imp)
+  #varImpPlot(model)
+  
+  imp$clinical_feature = row.names(imp)
+  #imp$clinical_feature
+  
+  imp$"MDA" = imp$"MeanDecreaseAccuracy"
+  imp$"Gini" = imp$"MeanDecreaseGini"
+  
+  rank = imp[order(imp$"clinical_feature"),]
+  #print(rank)
+  
+  if (i == 1){
+    results_df = rank
+  } else {
+    results_df$"MDA" = results_df$"MDA" + rank$"MeanDecreaseAccuracy"
+    results_df$"Gini" = results_df$"Gini" + rank$"MeanDecreaseGini"
+    
+    #results_df$"MeanDecreaseAccuracy" = results_df$"MeanDecreaseAccuracy" + rank$"MeanDecreaseAccuracy"
+    #results_df$"MeanDecreaseGini" = results_df$"MeanDecreaseGini" + rank$"MeanDecreaseGini"
+  }
+  
+}
+print(results_df)
+results_df$"finalMDA" = results_df$"MDA" / n
+results_df$"finalGini" = results_df$"Gini" / n
+results_df = results_df[order(-results_df$"finalMDA"),]
+results_df = results_df[order(-results_df$"finalGini"),]
+
+#results_df$"finalMDA" = results_df$"MeanDecreaseAccuracy" / n
+#results_df$"finalGini" = results_df$"MeanDecreaseGini" / n
+#results_df = results_df[order(-results_df$"finalMDA"),]
+#results_df = results_df[order(-results_df$"finalGini"),]
+results_df$"finalPos" = c(1:dim(results_df)[1])
+
+print(results_df)
+#impoo = imp
+```
+
+```{r}
+write.csv(final_result, "log_reg_pred_all_features_results.csv")
+```
+
+```{r}
+write.csv(results_df, "log_reg_pred_all_features_results_log.csv")
+```
+
+
+```{r}
+#Feature Ranking
+# Build a random forest model
+rank <- randomForest(DEATH_EVENT ~ ., data = train_data, importance=TRUE)
+varImp(rank)
+#varImpPlot(rank)
+```
+
+
+

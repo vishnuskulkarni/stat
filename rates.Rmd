@@ -1,0 +1,46 @@
+---
+title: "Rates"
+output: html_document
+---
+
+```{r}
+rates1 = function(preds, labels) {
+  
+  confusion_matrix = confusionMatrix(preds, labels)
+  
+  fg = preds[labels==1]
+  bg = preds[labels==0]
+  
+  pr_curve_test <- pr.curve(scores.class0 = fg, scores.class1 = bg, curve = F)
+  
+  prc_auc <- pr_curve_test$auc.integral
+  
+  roc_curve_test <- roc.curve(scores.class0 = fg, scores.class1 = bg, curve = F)
+  
+  roc_auc <- roc_curve_test$auc
+  
+  mcc = mcc(preds, labels) #https://www.rdocumentation.org/packages/mltools/versions/0.3.4/topics/mcc
+  f1 = confusion_matrix$byClass[7]
+  accuracy = confusion_matrix$overall[1]
+  tp_rate = confusion_matrix$byClass[1]
+  tn_rate = confusion_matrix$byClass[2]
+  
+  metrics = list(mcc, f1, accuracy, tp_rate, tn_rate, prc_auc, roc_auc)
+  #cat("\n\n",keyword,"\t MCC \t F1_score \t accuracy \t TP_rate \t TN_rate \t PR AUC \t ROC AUC\n")
+  #cat(keyword,"      ", sep="")
+  #cat("mcc ", mcc, " \t ",  sep="")
+  #cat("F1 ", f1, " \t ",  sep="")
+  #cat("Accuracy" ,accuracy, " \t ",  sep="")
+  #cat("TP_rate ",tp_rate, " \t ",  sep="")
+  #cat("TN_rate ",tn_rate,  "\t\t ",  sep="")
+  #cat("PR AUC " ,prc_auc, "\t\t",  sep="")
+  #cat("ROC AUC " ,roc_auc, sep="",  "\n\n")
+  
+  return(metrics)
+  
+  
+
+  
+}
+```
+

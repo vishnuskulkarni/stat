@@ -1,0 +1,96 @@
+---
+title: "Linear Regression Classifier on all features"
+output: html_document
+---
+
+```{r}
+library(caret)
+library(rpart)
+library(e1071)
+library(randomForest)
+library(PRROC)
+library(MLmetrics)
+```
+
+```{r}
+df = read.csv(url("https://archive.ics.uci.edu/ml/machine-learning-databases/00519/heart_failure_clinical_records_dataset.csv"))
+
+df = subset(df, select = -c(time))
+```
+
+
+```{r}
+# define a function that trains and evaluates a decision tree classifier on the data
+
+  # create an empty dataframe to store the results
+#results_df <- data.frame() #pr_auc=numeric(0), roc_auc=numeric(0))
+results_df <- data.frame(mcc=numeric(0), f1=numeric(0), accuracy=numeric(0), tp_rate=numeric(0), tn_rate=numeric(0), prc_auc=numeric(0), roc_auc=numeric(0))
+colnames(results_df) = c("MCC", "F1 score", "accuracy", "TP rate", "TN rate", "PR AUC", "ROC AUC")
+#random_forest_classifier <- function(df) {
+  # split the data into training and testing sets
+  #train_test_split <- createDataPartition(df$DEATH_EVENT, p = 0.8, list = FALSE)
+  #train_data <- df[train_test_split, ]
+  #test_data <- df[-train_test_split, ]
+n = 100
+
+for(i in 1:n) {
+  # train the decision tree classifier on the training data
+  #model <- rpart(DEATH_EVENT ~ ., data = train_data, importance=TRUE, proximity=TRUE)
+  split <- createDataPartition(df$DEATH_EVENT, p = 0.8, list = FALSE)
+  train_data <- df[split, ]
+  test_data <- df[-split, ]
+  
+  
+      # train the linear regression model on the training set
+  model <- lm(DEATH_EVENT ~ ., data=train_data)
+
+    # make predictions on the test set
+  predictions <- predict(model, test_data, type = "response")
+  
+  predictions = ifelse(predictions >0.5, 1, 0)
+  # evaluate the model on the test data
+  #predictions <- predict(model, test_data, type="response")
+  #predictions <- predict(model, test_data)
+  #print(as.factor(ifelse(predictions >0.5, 1, 0)))
+  #print(test_data$DEATH_EVENT)
+  
+  #confusion_matrix <- confusionMatrix(as.factor(ifelse(predictions >0.5, 1, 0)), factor(test_data$DEATH_EVENT), mode="everything")
+  #print(confusion_matrix)
+  #confusion_matrix = confusionMatrix(as.factor(predictions), factor(test_data$DEATH_EVENT))
+
+  #print(confusion_matrix)
+  #accuracy <- confusion_matrix$overall[1]
+  #print(accuracy)
+  
+  rate = rates1(as.factor(predictions), factor(test_data$DEATH_EVENT))
+  
+  #metrics <- list(
+    #mcc = mcc(predictions, test_data$DEATH_EVENT) #https://www.rdocumentation.org/packages/mltools/versions/0.3.4/topics/mcc
+  #f1 = confusion_matrix$byClass[7]
+  #accuracy = confusion_matrix$overall[1]
+  #tp_rate = confusion_matrix$byClass[1]
+  #tn_rate = confusion_matrix$byClass[2]
+                  #)
+  #print("ACC: ", accuracy)
+   # add the results to the results dataframe
+    #results_df <- rbind(results_df, data.frame(mcc, f1, accuracy, tp_rate, tn_rate)) #, pr_auc, roc_auc))
+    #print(results_df)
+  my_df = data.frame(rate)
+  colnames(my_df) = c("MCC", "F1 score", "accuracy", "TP rate", "TN rate", "PR AUC", "ROC AUC")
+  #colnames(results_df) = colnames(my_df)
+  
+  results_df = rbind(results_df, my_df)
+}
+print(results_df)
+stat = stat.desc(results_df)
+final_result = (stat)[c("median", "mean"),]
+final_result
+```
+
+```{r}
+write.csv(final_result, "lin_reg_classifier_all_features_results.csv")
+```
+
+```{r}
+write.csv(results_df, "lin_reg_classifier_all_features_results_log.csv")
+```

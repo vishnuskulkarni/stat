@@ -1,0 +1,48 @@
+---
+title: "Dataset with days mapped into months"
+author: "GMJ"
+date: "2022-12-09"
+output: html_document
+---
+
+```{r}
+library(dplyr)
+```
+
+
+```{r}
+df = read.csv(url("https://archive.ics.uci.edu/ml/machine-learning-databases/00519/heart_failure_clinical_records_dataset.csv"))
+```
+
+```{r}
+df
+```
+
+
+```{r}
+df$time
+```
+
+
+```{r}
+df2 = df %>% mutate(month = case_when(
+  time < 30 ~ 1,
+  time < 60 ~ 2,
+  time < 90 ~ 3,
+  time < 120 ~ 4,
+  time < 150 ~ 5,
+  time < 180 ~ 6,
+  time < 210 ~ 7,
+  time < 240 ~ 8,
+  time >= 240 ~ 9
+))
+```
+
+```{r}
+df2$month
+```
+
+```{r}
+write.csv(df2, "/Users/gudmundurjonasson/Desktop/statp\\df_with_months.csv", row.names = TRUE)
+```
+
